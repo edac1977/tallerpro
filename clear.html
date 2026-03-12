@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>Limpiar sesión</title></head>
+<body>
+<script>
+localStorage.clear();
+sessionStorage.clear();
+document.cookie.split(";").forEach(function(c){
+  document.cookie=c.replace(/^ +/,"").replace(/=.*/,"=;expires="+new Date().toUTCString()+";path=/");
+});
+window.location.href = 'http://localhost/tallerpro/';
+</script>
+<p>Limpiando sesión...</p>
+</body>
+</html>
