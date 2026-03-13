@@ -1157,7 +1157,7 @@ function showPage(page) {
 }
 
 function openModal(id) {
-  if(id==='modal-maquina') { populateSelect('m-cliente_id', cache.clientes, 'id','empresa','Sin asignar'); renderSelectTipos(); }
+  if(id==='modal-maquina') { populateSelect('m-cliente_id', cache.clientes, 'id','empresa','Sin asignar'); loadTiposMaquinaria(); }
   if(id==='modal-tipos-maquina') { loadTiposMaquinaria().then(()=>renderListaTipos()); }
   // modal-orden: populated by abrirNuevaOrden() or editarOrden()
   if(id==='modal-mantenimiento') { populateSelect('mnt-maquina_id',cache.maquinaria,'id','nombre','Seleccionar...'); populateSelect('mnt-tecnico_id',cache.tecnicos,'id',t=>`${t.nombre} ${t.apellido||''}`,'Sin asignar'); document.getElementById('mnt-fecha').value=new Date().toISOString().split('T')[0]; }
