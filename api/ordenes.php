@@ -37,8 +37,8 @@ if ($method === 'GET') {
     $totalRep = (float)($d['total_repuestos'] ?? 0);
     $total    = $manoObra + $totalRep;
     $stmt = $db->prepare("INSERT INTO ordenes (id,fecha,tipo,cliente_id,maquina_id,tecnico_id,prioridad,falla,diagnostico,trabajos,horas,mano_obra,total_repuestos,total,estado,fecha_entrega,observaciones) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
-    $stmt->bind_param('ssssssssssddddsss', $newId, $d['fecha'], $d['tipo'], $d['cliente_id'], $d['maquina_id'], $d['tecnico_id'], $d['prioridad'], $d['falla'], $d['diagnostico'], $d['trabajos'], $horas, $manoObra, $totalRep, $total, $d['estado'], $d['fecha_entrega'], $d['observaciones']);
-    $stmt->execute();
+$fechaEntrega = !empty($d['fecha_entrega']) ? $d['fecha_entrega'] : null;
+$stmt->bind_param('ssssssssssddddsss', $newId, $d['fecha'], $d['tipo'], $d['cliente_id'], $d['maquina_id'], $d['tecnico_id'], $d['prioridad'], $d['falla'], $d['diagnostico'], $d['trabajos'], $horas, $manoObra, $totalRep, $total, $d['estado'], $fechaEntrega, $d['observaciones']);    $stmt->execute();
     // Repuestos
     if (!empty($d['repuestos'])) {
         $rStmt = $db->prepare("INSERT INTO orden_repuestos (orden_id,repuesto_id,descripcion,cantidad,precio_unit) VALUES (?,?,?,?,?)");
