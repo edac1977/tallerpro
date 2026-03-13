@@ -144,7 +144,7 @@ if ($method === 'GET') {
     $compatible = $d['compatible_con'] ?? '';
     $stmt = $db->prepare("UPDATE repuestos SET descripcion=?,condicion=?,categoria=?,marca=?,referencia=?,stock_minimo=?,precio=?,unidad=?,compatible_con=? WHERE id=?");
     if (!$stmt) { echo json_encode(['error'=>$db->error]); exit; }
-    $stmt->bind_param('sssssiidss', $desc, $condicion, $categoria, $marca, $referencia, $minimo, $precio, $unidad, $compatible, $id);
+    $stmt->bind_param('sssssidsss', $desc, $condicion, $categoria, $marca, $referencia, $minimo, $precio, $unidad, $compatible, $id);
     if (!$stmt->execute()) { echo json_encode(['error'=>$stmt->error]); exit; }
     echo json_encode(['ok'=>true]);
 
