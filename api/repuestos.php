@@ -146,6 +146,20 @@ if ($method === 'GET') {
     if (!$stmt) { echo json_encode(['error'=>$db->error]); exit; }
     $stmt->bind_param('sssssidsss', $desc, $condicion, $categoria, $marca, $referencia, $minimo, $precio, $unidad, $compatible, $id);
     if (!$stmt->execute()) { echo json_encode(['error'=>$stmt->error]); exit; }
+
+    // Si se indicó bodega, actualizar o crear entrada en repuesto_bodega
+    $bodId = $d['bodega_id'] ?? '';
+    if ($bodId) {
+        $check = $db->prepare("SELECT id, stock FROM repuesto_bodega WHERE repuesto_id=? AND bodega_id=?");
+        $check->bind_param('ss', $id, $bodId); $check->execute();
+        $existing = $check->get_result()->fetch_assoc();
+        if (!$existing) {
+            $stockActual = (int)($d['stock'] ?? 0);
+            $insB = $db->prepare("INSERT INTO repuesto_bodega (repuesto_id,bodega_id,stock,stock_minimo) VALUES (?,?,?,?)");
+            $insB->bind_param('ssii', $id, $bodId, $stockActual, $minimo);
+            $insB->execute();
+        }
+    }
     echo json_encode(['ok'=>true]);
 
 // Eliminar repuesto
