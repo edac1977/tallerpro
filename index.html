@@ -1309,7 +1309,7 @@ async function loadTiposMaquinaria() {
   const data = await apiFetch('tipos_maquinaria.php');
   if (!data) return;
   cache.tiposMaquinaria = data;
-  renderSelectTipos();
+  loadTiposMaquinaria();
 }
 
 function renderSelectTipos(valorActual) {
