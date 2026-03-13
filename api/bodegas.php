@@ -35,7 +35,7 @@ if ($method === 'GET' && !$id && !$action) {
 // ── POST: nueva bodega ────────────────────────────────────────
 } elseif ($method === 'POST' && !$action) {
     $d = json_decode(file_get_contents('php://input'), true);
-    $res = $db->query("SELECT MAX(CAST(SUBSTRING(id,4) AS UNSIGNED)) AS n FROM bodegas");
+    $res = $db->query("SELECT MAX(CAST(SUBSTRING(id,5) AS UNSIGNED)) AS n FROM bodegas");
     $n = ($res->fetch_assoc()['n'] ?? 0) + 1;
     $newId = 'BOD-' . str_pad($n, 3, '0', STR_PAD_LEFT);
     $nombre    = $d['nombre']      ?? '';
