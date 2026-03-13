@@ -1004,7 +1004,7 @@ header('Pragma: no-cache');
       <div class="form-grid">
         <div class="form-group"><label>Nombre *</label><input id="t-nombre"></div>
         <div class="form-group"><label>Apellido</label><input id="t-apellido"></div>
-        <div class="form-group"><label>RUT / DNI</label><input id="t-rut"></div>
+        <div class="form-group"><label>Cédula de Ciudadanía</label><input id="t-rut" placeholder="Ej: 1075322059"></div>
         <div class="form-group"><label>Especialidad</label>
           <select id="t-especialidad"><option>Mecánico Industrial</option><option>Electricista Industrial</option><option>Hidráulica / Neumática</option><option>Electromecánico</option><option>Soldador</option><option>Multidisciplinario</option></select>
         </div>
