@@ -336,6 +336,7 @@ header('Pragma: no-cache');
       <div class="nav-item" onclick="showPage('clientes')"><span class="icon">👥</span> Clientes</div>
       <div class="nav-item" onclick="showPage('maquinaria')"><span class="icon">⚙️</span> Maquinaria</div>
       <div class="nav-item" onclick="showPage('repuestos')"><span class="icon">🔩</span> Repuestos</div>
+      <div class="nav-item" onclick="showPage('bodegas')"><span class="icon">🏭</span> Bodegas</div>
       <div class="nav-item" onclick="showPage('tecnicos')"><span class="icon">👷</span> Técnicos</div>
     </div>
     <div class="nav-section" onclick="toggleNavGroup('group-servicio')">Servicio <span class="nav-section-arrow">▾</span></div>
@@ -444,6 +445,20 @@ header('Pragma: no-cache');
           <div class="search-bar"><input class="search-input" placeholder="🔍 Buscar compra..." oninput="filterTable(this,'tb-compras')"></div>
           <table><thead><tr><th>Fecha</th><th>Repuesto</th><th>Proveedor</th><th>Cantidad</th><th>Precio Unit.</th><th>Total</th><th>Observaciones</th></tr></thead><tbody id="tb-compras"></tbody></table>
         </div>
+      </div>
+    </div>
+
+    <!-- BODEGAS -->
+    <div id="page-bodegas" class="page-hide">
+      <div class="section-header">
+        <span class="section-title">🏭 Bodegas</span>
+        <button class="btn btn-primary" onclick="openModal('modal-bodega');bodegaModalNuevo()">＋ Nueva Bodega</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>Nombre</th><th>Ubicación</th><th>Descripción</th><th>Estado</th><th>Acciones</th></tr></thead>
+          <tbody id="tb-bodegas"></tbody>
+        </table>
       </div>
     </div>
 
@@ -959,7 +974,11 @@ header('Pragma: no-cache');
         <div class="form-group"><label>Precio de venta ($)</label><input id="r-precio" type="number" value="0"></div>
         <div class="form-group"><label>Unidad</label><select id="r-unidad"><option>Unidad</option><option>Par</option><option>Juego</option><option>Litro</option><option>Kg</option><option>Metro</option></select></div>
         <div class="form-group span2"><label>Compatible con</label><input id="r-compatible_con"></div>
-        <div class="form-group"><label>Bodega</label><input id="r-bodega" placeholder="Ej: Estante A-3"></div>
+        <div class="form-group"><label>Bodega inicial</label>
+          <select id="r-bodega-id">
+            <option value="">— Sin bodega —</option>
+          </select>
+        </div>
       </div>
     </div>
     <div class="modal-footer">
@@ -980,6 +999,11 @@ header('Pragma: no-cache');
         </div>
         <div class="form-group"><label>Fecha *</label><input id="compra-fecha" type="date"></div>
         <div class="form-group"><label>Proveedor</label><input id="compra-proveedor" placeholder="Ej: Ferretería Central"></div>
+        <div class="form-group span2"><label>Bodega destino</label>
+          <select id="compra-bodega_id">
+            <option value="">— Sin bodega específica —</option>
+          </select>
+        </div>
         <div class="form-group"><label>Cantidad *</label><input id="compra-cantidad" type="number" min="1" value="1" oninput="calcTotalCompra()"></div>
         <div class="form-group"><label>Precio Unitario ($)</label><input id="compra-precio_unit" type="number" min="0" value="0" oninput="calcTotalCompra()"></div>
         <div class="form-group span2">
@@ -992,6 +1016,31 @@ header('Pragma: no-cache');
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('modal-compra')">Cancelar</button>
       <button class="btn btn-green" onclick="guardarCompra()">📦 Guardar Compra y Actualizar Stock</button>
+    </div>
+  </div>
+</div>
+
+<!-- Bodega -->
+<div class="modal-overlay" id="modal-bodega">
+  <div class="modal">
+    <div class="modal-header"><span class="modal-title">🏭 <span id="bodega-modal-title">Nueva Bodega</span></span><button class="modal-close" onclick="closeModal('modal-bodega')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <input type="hidden" id="bod-id">
+        <div class="form-group span2"><label>Nombre *</label><input id="bod-nombre" placeholder="Ej: Bodega Principal"></div>
+        <div class="form-group span2"><label>Ubicación</label><input id="bod-ubicacion" placeholder="Ej: Planta 1, Estante A"></div>
+        <div class="form-group span2"><label>Descripción</label><input id="bod-descripcion" placeholder="Descripción opcional"></div>
+        <div class="form-group"><label>Estado</label>
+          <select id="bod-activa">
+            <option value="1">Activa</option>
+            <option value="0">Inactiva</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-bodega')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveBodega()">💾 Guardar</button>
     </div>
   </div>
 </div>
@@ -1414,6 +1463,7 @@ function showPage(page) {
   if(page==='clientes') loadClientes();
   if(page==='maquinaria') loadMaquinaria();
   if(page==='repuestos') loadRepuestos();
+  if(page==='bodegas') loadBodegas();
   if(page==='tecnicos') loadTecnicos();
   if(page==='ordenes') loadOrdenes();
   if(page==='mantenimientos') loadMantenimientos();
@@ -1686,6 +1736,7 @@ async function guardarCompra(){
   if(!cant||cant<1) return alert('La cantidad debe ser mayor a 0');
   const body = {
     repuesto_id: repId,
+    bodega_id:   val('compra-bodega_id'),
     fecha:       val('compra-fecha'),
     proveedor:   val('compra-proveedor'),
     cantidad:    cant,
@@ -1712,6 +1763,68 @@ async function loadCompras(){
     <td style="font-size:12px;color:var(--text3);">${c.observaciones||'-'}</td>
   </tr>`).join('')
   : '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📦</div><p>Sin compras registradas</p></div></td></tr>';
+}
+
+// ── BODEGAS ───────────────────────────────────────────────────
+async function loadBodegas() {
+  const data = await apiFetch('bodegas.php'); if (!data) return;
+  cache.bodegas = data;
+  const tb = document.getElementById('tb-bodegas');
+  if (!tb) return;
+  if (!data.length) { tb.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text3);padding:40px;">No hay bodegas registradas</td></tr>'; return; }
+  tb.innerHTML = data.map(b => `
+    <tr>
+      <td class="id-code">${b.id}</td>
+      <td><strong>${b.nombre}</strong></td>
+      <td>${b.ubicacion||'—'}</td>
+      <td>${b.descripcion||'—'}</td>
+      <td><span class="badge ${b.activa=='1'?'badge-green':'badge-gray'}">${b.activa=='1'?'Activa':'Inactiva'}</span></td>
+      <td>
+        <button class="btn btn-xs" onclick="editarBodega('${b.id}')">✏️</button>
+        <button class="btn btn-xs btn-danger" onclick="deleteBodega('${b.id}')">🗑</button>
+      </td>
+    </tr>`).join('');
+  // Actualizar selectores de bodega en formularios
+  poblarSelectBodegas();
+}
+
+function poblarSelectBodegas() {
+  const bodegas = (cache.bodegas||[]).filter(b => b.activa == '1');
+  const opts = '<option value="">— Sin bodega —</option>' + bodegas.map(b => `<option value="${b.id}">${b.nombre}${b.ubicacion?' — '+b.ubicacion:''}</option>`).join('');
+  const selects = ['r-bodega-id', 'compra-bodega_id'];
+  selects.forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = opts; });
+}
+
+function bodegaModalNuevo() {
+  document.getElementById('bodega-modal-title').textContent = 'Nueva Bodega';
+  ['bod-id','bod-nombre','bod-ubicacion','bod-descripcion'].forEach(id => setVal(id,''));
+  setVal('bod-activa','1');
+}
+
+async function editarBodega(id) {
+  const b = (cache.bodegas||[]).find(x => x.id === id); if (!b) return;
+  document.getElementById('bodega-modal-title').textContent = 'Editar Bodega';
+  setVal('bod-id', b.id); setVal('bod-nombre', b.nombre);
+  setVal('bod-ubicacion', b.ubicacion||''); setVal('bod-descripcion', b.descripcion||'');
+  setVal('bod-activa', b.activa);
+  openModal('modal-bodega');
+}
+
+async function saveBodega() {
+  const nombre = val('bod-nombre').trim();
+  if (!nombre) { showToast('❌ El nombre es obligatorio','error'); return; }
+  const body = { nombre, ubicacion: val('bod-ubicacion'), descripcion: val('bod-descripcion'), activa: val('bod-activa') };
+  const id = val('bod-id');
+  const res = await apiFetch(id ? `bodegas.php?id=${id}` : 'bodegas.php', id ? 'PUT' : 'POST', body);
+  if (!res) return;
+  closeModal('modal-bodega'); loadBodegas(); showToast('✅ Bodega guardada');
+}
+
+async function deleteBodega(id) {
+  if (!confirm('¿Eliminar esta bodega?')) return;
+  const res = await apiFetch(`bodegas.php?id=${id}`, 'DELETE');
+  if (res?.error) { showToast('❌ ' + res.error, 'error'); return; }
+  loadBodegas(); showToast('🗑 Bodega eliminada');
 }
 
 // ── TÉCNICOS ──────────────────────────────────────────────────
@@ -3557,8 +3670,9 @@ async function eliminarUsuario(id, username){
 document.getElementById('current-date').textContent=new Date().toLocaleDateString('es-CL',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
 // Precargar datos en cache
 async function preload(){
-  const [c,m,r,t]= await Promise.all([apiFetch('clientes.php'),apiFetch('maquinaria.php'),apiFetch('repuestos.php'),apiFetch('tecnicos.php')]);
-  if(c)cache.clientes=c; if(m)cache.maquinaria=m; if(r)cache.repuestos=r; if(t)cache.tecnicos=t;
+  const [c,m,r,t,b]= await Promise.all([apiFetch('clientes.php'),apiFetch('maquinaria.php'),apiFetch('repuestos.php'),apiFetch('tecnicos.php'),apiFetch('bodegas.php')]);
+  if(c)cache.clientes=c; if(m)cache.maquinaria=m; if(r)cache.repuestos=r; if(t)cache.tecnicos=t; if(b)cache.bodegas=b;
+  poblarSelectBodegas();
   loadDashboard();
 }
 // Agregar usuarios al mapa de títulos — se maneja dentro de showPage
