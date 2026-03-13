@@ -1650,13 +1650,14 @@ async function loadRepuestos(){
   cache.repuestos=data;
   const tb=document.getElementById('tb-repuestos');
   tb.innerHTML=data.length?data.map(r=>{
-    const pct=Math.min(100,(r.stock/Math.max(r.stock_minimo*3,1))*100);
+    const stockReal = r.stock_total !== undefined ? r.stock_total : r.stock;
+    const pct=Math.min(100,(stockReal/Math.max(r.stock_minimo*3,1))*100);
     const est=r.stock<=0?['red','Sin Stock']:r.stock<=r.stock_minimo?['amber','Bajo']:['green','OK'];
     return `<tr><td class="id-code">${r.id}</td>
     <td><strong>${r.descripcion}</strong><br><span style="font-size:11px;color:var(--text3);">${r.marca||''} ${r.referencia||''}</span></td>
     <td>${r.categoria}</td>
     <td><span class="tag ${r.condicion==='usado'?'tag-amber':'tag-green'}" style="font-size:11px;">${r.condicion==='usado'?'Usado':'Nuevo'}</span></td>
-    <td><strong style="color:${r.stock<=r.stock_minimo?'var(--danger)':'var(--text)'}">${r.stock_total||r.stock}</strong> ${r.unidad}
+    <td><strong style="color:${stockReal<=r.stock_minimo?'var(--danger)':'var(--text)'}">${stockReal}</strong> ${r.unidad}
       <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${r.stock<=r.stock_minimo?'var(--danger)':'var(--success)'}"></div></div></td>
     <td>${(r.bodegas&&r.bodegas.length)?r.bodegas.map(b=>`<div style="font-size:11px;margin-bottom:2px;"><span style="color:var(--text3);">${b.bodega_nombre}:</span> <strong>${b.stock}</strong></div>`).join(''):'<span style="color:var(--text3);font-size:11px;">Sin bodega</span>'}</td>
     <td style="font-weight:600;">${fmt$(r.precio)}</td>
