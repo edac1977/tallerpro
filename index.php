@@ -1642,7 +1642,7 @@ function abrirNuevoRepuesto(){
   document.getElementById('r-stock-hint').style.display='none';
   setVal('r-id',''); setVal('r-descripcion',''); setVal('r-marca',''); setVal('r-referencia','');
   setVal('r-stock','0'); setVal('r-stock_minimo','5'); setVal('r-precio','0');
-  setVal('r-categoria','Filtros'); setVal('r-unidad','Unidad'); setVal('r-compatible_con',''); setVal('r-bodega','');
+  setVal('r-categoria','Filtros'); setVal('r-unidad','Unidad'); setVal('r-compatible_con','');
   openModal('modal-repuesto');
 }
 async function loadRepuestos(){
@@ -1657,7 +1657,7 @@ async function loadRepuestos(){
     <td><strong>${r.descripcion}</strong><br><span style="font-size:11px;color:var(--text3);">${r.marca||''} ${r.referencia||''}</span></td>
     <td>${r.categoria}</td>
     <td><span class="tag ${r.condicion==='usado'?'tag-amber':'tag-green'}" style="font-size:11px;">${r.condicion==='usado'?'Usado':'Nuevo'}</span></td>
-    <td><strong style="color:${stockReal<=r.stock_minimo?'var(--danger)':'var(--text)'}">${stockReal}</strong> ${r.unidad}
+    <td><strong style="color:${stockReal<=r.stock_minimo?'var(--danger)':'var(--text)'}">${stockReal}</strong>${r.unidad?` ${r.unidad}`:''}
       <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${r.stock<=r.stock_minimo?'var(--danger)':'var(--success)'}"></div></div></td>
     <td>${(r.bodegas&&r.bodegas.length)?r.bodegas.map(b=>`<div style="font-size:11px;margin-bottom:2px;"><span style="color:var(--text3);">${b.bodega_nombre}:</span> <strong>${b.stock}</strong></div>`).join(''):'<span style="color:var(--text3);font-size:11px;">Sin bodega</span>'}</td>
     <td style="font-weight:600;">${fmt$(r.precio)}</td>
@@ -1673,7 +1673,7 @@ async function saveRepuesto(){
   const cod=val('r-id'),desc=val('r-descripcion'); if(!cod||!desc) return alert('Código y descripción requeridos');
   const editId=val('r-editing-id');
   const body={id:cod,descripcion:desc,categoria:val('r-categoria'),marca:val('r-marca'),referencia:val('r-referencia'),
-    stock_minimo:val('r-stock_minimo'),precio:val('r-precio'),unidad:val('r-unidad'),compatible_con:val('r-compatible_con'),condicion:val('r-condicion'),bodega:val('r-bodega')};
+    stock_minimo:val('r-stock_minimo'),precio:val('r-precio'),unidad:val('r-unidad'),compatible_con:val('r-compatible_con'),condicion:val('r-condicion'),bodega_id:val('r-bodega-id')};
   // stock solo se envía al crear
   if(!editId) body.stock=val('r-stock');
   if(editId) await apiFetch(`repuestos.php?id=${editId}`,'PUT',body);
@@ -1697,7 +1697,7 @@ function editRepuesto(id){
   setVal('r-descripcion',r.descripcion); setVal('r-categoria',r.categoria);
   setVal('r-marca',r.marca); setVal('r-referencia',r.referencia);
   setVal('r-stock_minimo',r.stock_minimo); setVal('r-precio',r.precio);
-  setVal('r-unidad',r.unidad); setVal('r-compatible_con',r.compatible_con); setVal('r-bodega',r.bodega||'');
+  setVal('r-unidad',r.unidad); setVal('r-compatible_con',r.compatible_con);
   setVal('r-condicion', r.condicion||'nuevo');
   openModal('modal-repuesto');
 }
