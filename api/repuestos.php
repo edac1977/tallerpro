@@ -46,7 +46,7 @@ if ($method === 'GET') {
     // Lista de repuestos con stock total y por bodega
     } else {
         $result = $db->query("SELECT r.*,
-            COALESCE((SELECT SUM(rb.stock) FROM repuesto_bodega rb WHERE rb.repuesto_id=r.id), r.stock) as stock_total
+            CASE WHEN (SELECT COUNT(*) FROM repuesto_bodega rb WHERE rb.repuesto_id=r.id) > 0 THEN (SELECT SUM(rb.stock) FROM repuesto_bodega rb WHERE rb.repuesto_id=r.id) ELSE r.stock END as stock_total
             FROM repuestos r ORDER BY r.descripcion ASC");
         $rows = [];
         while ($row = $result->fetch_assoc()) {
