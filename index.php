@@ -436,7 +436,7 @@ header('Pragma: no-cache');
       <div id="rep-vista-inventario">
         <div class="table-wrap">
           <div class="search-bar"><input class="search-input" placeholder="🔍 Buscar repuesto..." oninput="filterTable(this,'tb-repuestos')"></div>
-          <table><thead><tr><th>Código</th><th>Descripción</th><th>Categoría</th><th>Condición</th><th>Stock</th><th>Mín.</th><th>Precio</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="tb-repuestos"></tbody></table>
+          <table><thead><tr><th>Código</th><th>Descripción</th><th>Categoría</th><th>Condición</th><th>Stock Total</th><th>Stock por Bodega</th><th>Precio</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="tb-repuestos"></tbody></table>
         </div>
       </div>
       <!-- Historial de compras -->
@@ -1656,9 +1656,9 @@ async function loadRepuestos(){
     <td><strong>${r.descripcion}</strong><br><span style="font-size:11px;color:var(--text3);">${r.marca||''} ${r.referencia||''}</span></td>
     <td>${r.categoria}</td>
     <td><span class="tag ${r.condicion==='usado'?'tag-amber':'tag-green'}" style="font-size:11px;">${r.condicion==='usado'?'Usado':'Nuevo'}</span></td>
-    <td><strong style="color:${r.stock<=r.stock_minimo?'var(--danger)':'var(--text)'}">${r.stock}</strong> ${r.unidad}
+    <td><strong style="color:${r.stock<=r.stock_minimo?'var(--danger)':'var(--text)'}">${r.stock_total||r.stock}</strong> ${r.unidad}
       <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${r.stock<=r.stock_minimo?'var(--danger)':'var(--success)'}"></div></div></td>
-    <td>${r.stock_minimo}</td>
+    <td>${(r.bodegas&&r.bodegas.length)?r.bodegas.map(b=>`<div style="font-size:11px;margin-bottom:2px;"><span style="color:var(--text3);">${b.bodega_nombre}:</span> <strong>${b.stock}</strong></div>`).join(''):'<span style="color:var(--text3);font-size:11px;">Sin bodega</span>'}</td>
     <td style="font-weight:600;">${fmt$(r.precio)}</td>
     <td><span class="tag tag-${est[0]}">${est[1]}</span></td>
     <td class="actions">
