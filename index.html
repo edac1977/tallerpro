@@ -742,8 +742,8 @@
         <div class="form-group"><label>Modelo</label><input id="m-modelo"></div>
         <div class="form-group"><label>N° Serie</label><input id="m-serie"></div>
         <div class="form-group"><label>Año</label><input id="m-anio" type="number"></div>
-        <div class="form-group"><label>Tipo</label>
-          <select id="m-tipo"><option value="">Seleccionar...</option><option>Compresor</option><option>Bomba</option><option>Motor Eléctrico</option><option>Generador</option><option>Torno</option><option>Fresadora</option><option>Grúa / Montacargas</option><option>Prensa</option><option>Soldadora</option><option>Otro</option></select>
+        <div class="form-group"><label style="display:flex;justify-content:space-between;align-items:center;">Tipo <span onclick="openModal('modal-tipos-maquina')" style="font-size:11px;color:var(--accent);cursor:pointer;font-weight:400;">⚙️ Gestionar tipos</span></label>
+          <select id="m-tipo"><option value="">Seleccionar...</option></select>
         </div>
         <div class="form-group"><label>Cliente</label><select id="m-cliente_id"><option value="">Sin asignar</option></select></div>
         <div class="form-group"><label>Potencia</label><input id="m-potencia" placeholder="Ej: 15 HP"></div>
@@ -767,6 +767,23 @@
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('modal-maquina')">Cancelar</button>
       <button class="btn btn-primary" onclick="saveMaquina()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Gestor de Tipos de Maquinaria -->
+<div class="modal-overlay" id="modal-tipos-maquina">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-header"><span class="modal-title">⚙️ Tipos de Maquinaria</span><button class="modal-close" onclick="closeModal('modal-tipos-maquina')">✕</button></div>
+    <div class="modal-body">
+      <div style="display:flex;gap:8px;margin-bottom:16px;">
+        <input id="nuevo-tipo-input" placeholder="Ej: Compresor de Tornillo" style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:6px;padding:8px 12px;color:var(--text);font-size:14px;outline:none;" onkeydown="if(event.key==='Enter')agregarTipoMaquina()">
+        <button class="btn btn-primary" onclick="agregarTipoMaquina()">＋ Agregar</button>
+      </div>
+      <div id="lista-tipos-maquina" style="display:flex;flex-direction:column;gap:6px;max-height:360px;overflow-y:auto;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-tipos-maquina')">Cerrar</button>
     </div>
   </div>
 </div>
@@ -996,7 +1013,7 @@
           <div><span style="color:var(--text3);">Nombre:</span> <strong style="color:var(--text);">EDINSON ACUÑA AYALA</strong></div>
           <div><span style="color:var(--text3);">CC:</span> <strong style="color:var(--text);">96.354.114</strong></div>
           <div><span style="color:var(--text3);">Teléfono:</span> <strong style="color:var(--text);">3137217967</strong></div>
-          <div><span style="color:var(--text3);">Email:</span> <strong style="color:var(--text);">edac77@gmail.com</strong></div>
+          <div><span style="color:var(--text3);">Email:</span> <strong style="color:var(--text);"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="a4c1c0c5c79393e4c3c9c5cdc88ac7cbc9">[email&#160;protected]</a></strong></div>
           <input type="hidden" id="fac-taller-nombre" value="EDINSON ACUÑA AYALA">
           <input type="hidden" id="fac-taller-rut"    value="96.354.114">
           <input type="hidden" id="fac-taller-telefono" value="3137217967">
@@ -1084,12 +1101,12 @@
   </div>
 </div>
 
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 // ── CONFIG ────────────────────────────────────────────────────
 const API = 'api'; // Ruta relativa a la carpeta api/
 
 // ── STATE ─────────────────────────────────────────────────────
-let cache = { clientes:[], maquinaria:[], repuestos:[], tecnicos:[], ordenes:[], mantenimientos:[] };
+let cache = { clientes:[], maquinaria:[], repuestos:[], tecnicos:[], ordenes:[], mantenimientos:[], tiposMaquinaria:[] };
 let fotosTemp = [];
 let repOrdenTemp = [];
 let currentMantId = null;
@@ -1140,7 +1157,8 @@ function showPage(page) {
 }
 
 function openModal(id) {
-  if(id==='modal-maquina') populateSelect('m-cliente_id', cache.clientes, 'id','empresa','Sin asignar');
+  if(id==='modal-maquina') { populateSelect('m-cliente_id', cache.clientes, 'id','empresa','Sin asignar'); renderSelectTipos(); }
+  if(id==='modal-tipos-maquina') { loadTiposMaquinaria().then(()=>renderListaTipos()); }
   // modal-orden: populated by abrirNuevaOrden() or editarOrden()
   if(id==='modal-mantenimiento') { populateSelect('mnt-maquina_id',cache.maquinaria,'id','nombre','Seleccionar...'); populateSelect('mnt-tecnico_id',cache.tecnicos,'id',t=>`${t.nombre} ${t.apellido||''}`,'Sin asignar'); document.getElementById('mnt-fecha').value=new Date().toISOString().split('T')[0]; }
   if(id==='modal-ejecutar') { populateSelect('exec-tecnico_id',cache.tecnicos,'id',t=>`${t.nombre} ${t.apellido||''}`,'Seleccionar...'); document.getElementById('exec-fecha').value=new Date().toISOString().split('T')[0]; }
@@ -1285,6 +1303,82 @@ function editMaquina(id){
   openModal('modal-maquina');
 }
 async function deleteMaquina(id){if(!confirm('¿Eliminar?'))return;await apiFetch(`maquinaria.php?id=${id}`,'DELETE');loadMaquinaria();showToast('🗑 Máquina eliminada');}
+
+// ── Tipos de Maquinaria ──────────────────────────────────────────
+async function loadTiposMaquinaria() {
+  const data = await apiFetch('tipos_maquinaria.php');
+  if (!data) return;
+  cache.tiposMaquinaria = data;
+  renderSelectTipos();
+}
+
+function renderSelectTipos(valorActual) {
+  const sel = document.getElementById('m-tipo');
+  if (!sel) return;
+  const val = valorActual || sel.value;
+  sel.innerHTML = '<option value="">Seleccionar...</option>' +
+    cache.tiposMaquinaria.map(t => `<option value="${t.nombre}" ${val===t.nombre?'selected':''}>${t.nombre}</option>`).join('');
+}
+
+function renderListaTipos() {
+  const lista = document.getElementById('lista-tipos-maquina');
+  if (!lista) return;
+  lista.innerHTML = cache.tiposMaquinaria.length
+    ? cache.tiposMaquinaria.map(t => `
+        <div style="display:flex;align-items:center;justify-content:space-between;background:var(--bg3);border-radius:6px;padding:8px 12px;">
+          <span id="tipo-label-${t.id}" style="font-size:14px;color:var(--text);">${t.nombre}</span>
+          <div style="display:flex;gap:6px;">
+            <button onclick="editarTipoMaquina(${t.id},'${t.nombre.replace(/'/g,"\\'")}')" style="background:none;border:1px solid var(--border);border-radius:5px;padding:3px 10px;color:var(--accent);cursor:pointer;font-size:12px;">✏️</button>
+            <button onclick="eliminarTipoMaquina(${t.id})" style="background:none;border:1px solid var(--border);border-radius:5px;padding:3px 10px;color:#e74c3c;cursor:pointer;font-size:12px;">🗑</button>
+          </div>
+        </div>`).join('')
+    : '<p style="color:var(--text3);text-align:center;font-size:13px;">Sin tipos registrados</p>';
+}
+
+async function agregarTipoMaquina() {
+  const input = document.getElementById('nuevo-tipo-input');
+  const nombre = input.value.trim();
+  if (!nombre) { showToast('⚠️ Escribe un nombre'); return; }
+  const res = await apiFetch('tipos_maquinaria.php', 'POST', { nombre });
+  if (!res) return;
+  input.value = '';
+  await loadTiposMaquinaria();
+  renderListaTipos();
+  showToast('✅ Tipo agregado');
+}
+
+async function eliminarTipoMaquina(id) {
+  if (!confirm('¿Eliminar este tipo?')) return;
+  await apiFetch(`tipos_maquinaria.php?id=${id}`, 'DELETE');
+  await loadTiposMaquinaria();
+  renderListaTipos();
+  showToast('🗑 Tipo eliminado');
+}
+
+function editarTipoMaquina(id, nombre) {
+  const label = document.getElementById(`tipo-label-${id}`);
+  if (!label) return;
+  const parent = label.parentElement;
+  parent.innerHTML = `
+    <input id="tipo-edit-${id}" value="${nombre}" style="flex:1;background:var(--bg2);border:1px solid var(--accent);border-radius:5px;padding:5px 10px;color:var(--text);font-size:13px;outline:none;width:60%;">
+    <div style="display:flex;gap:6px;">
+      <button onclick="guardarEdicionTipo(${id})" style="background:var(--accent);border:none;border-radius:5px;padding:3px 10px;color:#fff;cursor:pointer;font-size:12px;">✔ Guardar</button>
+      <button onclick="renderListaTipos()" style="background:none;border:1px solid var(--border);border-radius:5px;padding:3px 10px;color:var(--text3);cursor:pointer;font-size:12px;">✕</button>
+    </div>`;
+  parent.style.display = 'flex';
+  parent.style.gap = '8px';
+  document.getElementById(`tipo-edit-${id}`).focus();
+}
+
+async function guardarEdicionTipo(id) {
+  const input = document.getElementById(`tipo-edit-${id}`);
+  const nombre = input ? input.value.trim() : '';
+  if (!nombre) { showToast('⚠️ El nombre no puede estar vacío'); return; }
+  await apiFetch(`tipos_maquinaria.php?id=${id}`, 'PUT', { nombre });
+  await loadTiposMaquinaria();
+  renderListaTipos();
+  showToast('✅ Tipo actualizado');
+}
 
 // ── REPUESTOS ─────────────────────────────────────────────────
 function switchRepTab(tab){
@@ -2627,8 +2721,8 @@ async function eliminarUsuario(id, username){
 document.getElementById('current-date').textContent=new Date().toLocaleDateString('es-CL',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
 // Precargar datos en cache
 async function preload(){
-  const [c,m,r,t]= await Promise.all([apiFetch('clientes.php'),apiFetch('maquinaria.php'),apiFetch('repuestos.php'),apiFetch('tecnicos.php')]);
-  if(c)cache.clientes=c; if(m)cache.maquinaria=m; if(r)cache.repuestos=r; if(t)cache.tecnicos=t;
+  const [c,m,r,t,tm]= await Promise.all([apiFetch('clientes.php'),apiFetch('maquinaria.php'),apiFetch('repuestos.php'),apiFetch('tecnicos.php'),apiFetch('tipos_maquinaria.php')]);
+  if(c)cache.clientes=c; if(m)cache.maquinaria=m; if(r)cache.repuestos=r; if(t)cache.tecnicos=t; if(tm)cache.tiposMaquinaria=tm;
   loadDashboard();
 }
 // Agregar usuarios al mapa de títulos
@@ -2651,14 +2745,4 @@ titles['usuarios'] = 'Usuarios y Permisos';
       ocultarLogin();
       aplicarPermisos();
       document.getElementById('topbar-username').textContent = currentUser.nombre || currentUser.username;
-      document.getElementById('topbar-avatar').textContent   = (currentUser.nombre||currentUser.username).charAt(0).toUpperCase();
-      preload();
-      return;
-    }
-  }
-  try{ localStorage.removeItem('tallerpro_user'); }catch(e){}
-  document.getElementById('login-user').focus();
-})();
-</script>
-</body>
-</html>
+      document.getElementById('topbar-avatar').textContent   = (currentUser.nombre||curr
