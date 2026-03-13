@@ -56,9 +56,10 @@ if ($method === 'GET') {
     $precio      = (float)($d['precio']    ?? 0);
     $unidad      = $d['unidad']       ?? '';
     $compatible  = $d['compatible_con'] ?? '';
-    $stmt = $db->prepare("INSERT INTO repuestos (id,descripcion,condicion,categoria,marca,referencia,stock,stock_minimo,precio,unidad,compatible_con) VALUES (?,?,?,?,?,?,?,?,?,?,?)");
+    $bodega      = $d['bodega'] ?? '';
+    $stmt = $db->prepare("INSERT INTO repuestos (id,descripcion,condicion,categoria,marca,referencia,stock,stock_minimo,precio,unidad,compatible_con,bodega) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)");
     if (!$stmt) { echo json_encode(['error'=>$db->error]); exit; }
-    $stmt->bind_param('ssssssiidss', $rid, $desc, $condicion, $categoria, $marca, $referencia, $stock, $minimo, $precio, $unidad, $compatible);
+    $stmt->bind_param('ssssssiiidss', $rid, $desc, $condicion, $categoria, $marca, $referencia, $stock, $minimo, $precio, $unidad, $compatible, $bodega);
     if (!$stmt->execute()) { echo json_encode(['error'=>$stmt->error]); exit; }
     echo json_encode(['ok'=>true]);
 
@@ -73,9 +74,10 @@ if ($method === 'GET') {
     $precio     = (float)($d['precio']    ?? 0);
     $unidad     = $d['unidad']        ?? '';
     $compatible = $d['compatible_con'] ?? '';
-    $stmt = $db->prepare("UPDATE repuestos SET descripcion=?,condicion=?,categoria=?,marca=?,referencia=?,stock_minimo=?,precio=?,unidad=?,compatible_con=? WHERE id=?");
+    $bodega     = $d['bodega'] ?? '';
+    $stmt = $db->prepare("UPDATE repuestos SET descripcion=?,condicion=?,categoria=?,marca=?,referencia=?,stock_minimo=?,precio=?,unidad=?,compatible_con=?,bodega=? WHERE id=?");
     if (!$stmt) { echo json_encode(['error'=>$db->error]); exit; }
-    $stmt->bind_param('sssssiidss', $desc, $condicion, $categoria, $marca, $referencia, $minimo, $precio, $unidad, $compatible, $id);
+    $stmt->bind_param('ssssssidsss', $desc, $condicion, $categoria, $marca, $referencia, $minimo, $precio, $unidad, $compatible, $bodega, $id);
     if (!$stmt->execute()) { echo json_encode(['error'=>$stmt->error]); exit; }
     echo json_encode(['ok'=>true]);
 
