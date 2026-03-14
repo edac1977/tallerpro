@@ -335,6 +335,7 @@ header('Pragma: no-cache');
     <div class="nav-group" id="group-gestion">
       <div class="nav-item" onclick="showPage('clientes')"><span class="icon">👥</span> Clientes</div>
       <div class="nav-item" onclick="showPage('maquinaria')"><span class="icon">⚙️</span> Maquinaria</div>
+      <div class="nav-item" onclick="showPage('tipos_maquina')" style="padding-left:32px;font-size:12px;"><span class="icon">🏷️</span> Tipos de Máquina</div>
       <div class="nav-item" onclick="showPage('repuestos')"><span class="icon">🔩</span> Repuestos</div>
       <div class="nav-item" onclick="showPage('bodegas')"><span class="icon">🏭</span> Bodegas</div>
       <div class="nav-item" onclick="showPage('tecnicos')"><span class="icon">👷</span> Técnicos</div>
@@ -419,6 +420,20 @@ header('Pragma: no-cache');
     </div>
 
     <!-- REPUESTOS -->
+    <!-- TIPOS DE MÁQUINA -->
+    <div id="page-tipos_maquina" class="page-hide">
+      <div class="section-header">
+        <span class="section-title">🏷️ Tipos de Máquina</span>
+        <button class="btn btn-primary" onclick="openModal('modal-tipo-maquina');tipoMaqModalNuevo()">＋ Nuevo Tipo</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID</th><th>Nombre</th><th>Descripción</th><th>Estado</th><th>Acciones</th></tr></thead>
+          <tbody id="tb-tipos-maquina"></tbody>
+        </table>
+      </div>
+    </div>
+
     <div id="page-repuestos" class="page-hide">
       <div class="section-header">
         <span class="section-title">Inventario de Repuestos</span>
@@ -916,7 +931,7 @@ header('Pragma: no-cache');
         <div class="form-group"><label>N° Serie</label><input id="m-serie"></div>
         <div class="form-group"><label>Año</label><input id="m-anio" type="number"></div>
         <div class="form-group"><label>Tipo</label>
-          <select id="m-tipo"><option value="">Seleccionar...</option><option>Compresor</option><option>Bomba</option><option>Motor Eléctrico</option><option>Generador</option><option>Torno</option><option>Fresadora</option><option>Grúa / Montacargas</option><option>Prensa</option><option>Soldadora</option><option>Otro</option></select>
+          <select id="m-tipo"><option value="">Seleccionar tipo...</option></select>
         </div>
         <div class="form-group"><label>Cliente</label><select id="m-cliente_id"><option value="">Sin asignar</option></select></div>
         <div class="form-group"><label>Potencia</label><input id="m-potencia" placeholder="Ej: 15 HP"></div>
@@ -1016,6 +1031,30 @@ header('Pragma: no-cache');
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('modal-compra')">Cancelar</button>
       <button class="btn btn-green" onclick="guardarCompra()">📦 Guardar Compra y Actualizar Stock</button>
+    </div>
+  </div>
+</div>
+
+<!-- Tipo de Máquina -->
+<div class="modal-overlay" id="modal-tipo-maquina">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-header"><span class="modal-title">🏷️ <span id="tipo-maq-modal-title">Nuevo Tipo de Máquina</span></span><button class="modal-close" onclick="closeModal('modal-tipo-maquina')">✕</button></div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <input type="hidden" id="tm-id">
+        <div class="form-group span2"><label>Nombre *</label><input id="tm-nombre" placeholder="Ej: Compresor de Tornillo"></div>
+        <div class="form-group span2"><label>Descripción</label><input id="tm-descripcion" placeholder="Descripción opcional"></div>
+        <div class="form-group"><label>Estado</label>
+          <select id="tm-activo">
+            <option value="1">Activo</option>
+            <option value="0">Inactivo</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-tipo-maquina')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveTipoMaquina()">💾 Guardar</button>
     </div>
   </div>
 </div>
@@ -1464,6 +1503,7 @@ function showPage(page) {
   if(page==='maquinaria') loadMaquinaria();
   if(page==='repuestos') loadRepuestos();
   if(page==='bodegas') loadBodegas();
+  if(page==='tipos_maquina') loadTiposMaquina();
   if(page==='tecnicos') loadTecnicos();
   if(page==='ordenes') loadOrdenes();
   if(page==='mantenimientos') loadMantenimientos();
@@ -1764,6 +1804,67 @@ async function loadCompras(){
     <td style="font-size:12px;color:var(--text3);">${c.observaciones||'-'}</td>
   </tr>`).join('')
   : '<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">📦</div><p>Sin compras registradas</p></div></td></tr>';
+}
+
+// ── TIPOS DE MÁQUINA ──────────────────────────────────────────
+async function loadTiposMaquina() {
+  const data = await apiFetch('tipos_maquina.php'); if (!data) return;
+  cache.tiposMaquina = data;
+  const tb = document.getElementById('tb-tipos-maquina');
+  if (!tb) return;
+  if (!data.length) { tb.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:40px;">No hay tipos registrados</td></tr>'; return; }
+  tb.innerHTML = data.map(t => `
+    <tr>
+      <td class="id-code">${t.id}</td>
+      <td><strong>${t.nombre}</strong></td>
+      <td>${t.descripcion||'—'}</td>
+      <td><span class="badge ${t.activo=='1'?'badge-green':'badge-gray'}">${t.activo=='1'?'Activo':'Inactivo'}</span></td>
+      <td>
+        <button class="btn btn-xs" onclick="editarTipoMaquina('${t.id}')">✏️</button>
+        <button class="btn btn-xs btn-danger" onclick="deleteTipoMaquina('${t.id}')">🗑</button>
+      </td>
+    </tr>`).join('');
+  poblarSelectTiposMaquina();
+}
+
+function poblarSelectTiposMaquina() {
+  const tipos = (cache.tiposMaquina||[]).filter(t => t.activo == '1');
+  const sel = document.getElementById('m-tipo');
+  if (!sel) return;
+  const currentVal = sel.value;
+  sel.innerHTML = '<option value="">Seleccionar tipo...</option>' + tipos.map(t => `<option value="${t.nombre}">${t.nombre}</option>`).join('');
+  if (currentVal) sel.value = currentVal;
+}
+
+function tipoMaqModalNuevo() {
+  document.getElementById('tipo-maq-modal-title').textContent = 'Nuevo Tipo de Máquina';
+  ['tm-id','tm-nombre','tm-descripcion'].forEach(id => setVal(id,''));
+  setVal('tm-activo','1');
+}
+
+async function editarTipoMaquina(id) {
+  const t = (cache.tiposMaquina||[]).find(x => x.id === id); if (!t) return;
+  document.getElementById('tipo-maq-modal-title').textContent = 'Editar Tipo de Máquina';
+  setVal('tm-id', t.id); setVal('tm-nombre', t.nombre);
+  setVal('tm-descripcion', t.descripcion||''); setVal('tm-activo', t.activo);
+  openModal('modal-tipo-maquina');
+}
+
+async function saveTipoMaquina() {
+  const nombre = val('tm-nombre').trim();
+  if (!nombre) { showToast('❌ El nombre es obligatorio','error'); return; }
+  const body = { nombre, descripcion: val('tm-descripcion'), activo: val('tm-activo') };
+  const id = val('tm-id');
+  const res = await apiFetch(id ? `tipos_maquina.php?id=${id}` : 'tipos_maquina.php', id ? 'PUT' : 'POST', body);
+  if (!res) return;
+  closeModal('modal-tipo-maquina'); loadTiposMaquina(); showToast('✅ Tipo guardado');
+}
+
+async function deleteTipoMaquina(id) {
+  if (!confirm('¿Eliminar este tipo?')) return;
+  const res = await apiFetch(`tipos_maquina.php?id=${id}`, 'DELETE');
+  if (res?.error) { showToast('❌ ' + res.error, 'error'); return; }
+  loadTiposMaquina(); showToast('🗑 Tipo eliminado');
 }
 
 // ── BODEGAS ───────────────────────────────────────────────────
@@ -3671,9 +3772,9 @@ async function eliminarUsuario(id, username){
 document.getElementById('current-date').textContent=new Date().toLocaleDateString('es-CL',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
 // Precargar datos en cache
 async function preload(){
-  const [c,m,r,t,b]= await Promise.all([apiFetch('clientes.php'),apiFetch('maquinaria.php'),apiFetch('repuestos.php'),apiFetch('tecnicos.php'),apiFetch('bodegas.php')]);
-  if(c)cache.clientes=c; if(m)cache.maquinaria=m; if(r)cache.repuestos=r; if(t)cache.tecnicos=t; if(b)cache.bodegas=b;
-  poblarSelectBodegas();
+  const [c,m,r,t,b,tm]= await Promise.all([apiFetch('clientes.php'),apiFetch('maquinaria.php'),apiFetch('repuestos.php'),apiFetch('tecnicos.php'),apiFetch('bodegas.php'),apiFetch('tipos_maquina.php')]);
+  if(c)cache.clientes=c; if(m)cache.maquinaria=m; if(r)cache.repuestos=r; if(t)cache.tecnicos=t; if(b)cache.bodegas=b; if(tm)cache.tiposMaquina=tm;
+  poblarSelectBodegas(); poblarSelectTiposMaquina();
   loadDashboard();
 }
 // Agregar usuarios al mapa de títulos — se maneja dentro de showPage
