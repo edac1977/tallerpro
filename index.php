@@ -412,7 +412,7 @@ header('Pragma: no-cache');
 
     <!-- MAQUINARIA -->
     <div id="page-maquinaria" class="page-hide">
-      <div class="section-header"><span class="section-title">Maquinaria</span><button class="btn btn-primary" id="btn-nueva-maquina" onclick="openModal('modal-maquina')">＋ Nueva Máquina</button></div>
+      <div class="section-header"><span class="section-title">Maquinaria</span><button class="btn btn-primary" id="btn-nueva-maquina" onclick="poblarSelectTiposMaquina();openModal('modal-maquina')">＋ Nueva Máquina</button></div>
       <div class="table-wrap">
         <div class="search-bar"><input class="search-input" placeholder="🔍 Buscar maquinaria..." oninput="filterTable(this,'tb-maquinaria')"></div>
         <table><thead><tr><th>ID</th><th>Nombre / Modelo</th><th>Marca</th><th>Serie</th><th>Cliente</th><th>Tipo</th><th>Estado</th><th>Acciones</th></tr></thead><tbody id="tb-maquinaria"></tbody></table>
@@ -1656,6 +1656,7 @@ async function saveMaquina(){
 function editMaquina(id){
   const m=cache.maquinaria.find(x=>x.id===id); if(!m) return;
   populateSelect('m-cliente_id',cache.clientes,'id','empresa','Sin asignar');
+  poblarSelectTiposMaquina();
   ['id','nombre','marca','modelo','serie','anio','tipo','potencia','voltaje','ubicacion','estado','notas'].forEach(f=>setVal('m-'+f,m[f]));
   setVal('m-cliente_id',m.cliente_id); setVal('m-horas_uso',m.horas_uso);
   fotosTemp=[...(m.fotos||[])]; renderFotoPreview();
